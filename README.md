@@ -1,7 +1,15 @@
 # Spam Detection MLOps Pipeline
 ## Author: Bonyu Miracle Glen
+<div align="center">
+  <h4>Word Frequency Analysis</h4>
+  <p>
+    <img src="https://github.com/user-attachments/assets/52c5dc3f-e54b-430b-ab76-b955b20ef00b" width="45%" alt="Word Frequency Analysis" />
+    <img src="https://github.com/user-attachments/assets/77371d2c-dd0d-4fe7-987d-db874633e0f5" width="45%" alt="Feature Importance" />
+  </p>
+  <p><em>Left: Word frequency in spam vs ham messages. Right: Feature importance showing words that influence classification.</em></p>
+</div>
 
-![MLOps Architecture](https://i.imgur.com/lmT7w2j.png)
+
 
 ## Overview
 
@@ -81,20 +89,24 @@ Our spam detection model undergoes rigorous evaluation in our Jupyter notebook u
 
 ### Data Visualizations
 
-#### 1. Message Length Distribution - Spam vs Ham
-![Message Length Distribution](INSERT_IMAGE_URL_HERE)
+<div align="center">
+  <h4>Word Frequency Analysis</h4>
+  <p>
+    <img src="https://github.com/user-attachments/assets/f9a71eab-c4d5-4fcc-b9d9-f19b6e2f9ac7" width="45%" alt="Word Frequency Analysis" />
+    <img src="https://github.com/user-attachments/assets/818ff977-6950-4832-81ee-3b946291338c" width="45%" alt="Feature Importance" />
+    <img src="https://github.com/user-attachments/assets/79ea3a99-be0f-41b1-95ee-a11260c450fd" width="45%" alt="Feature Importance" />
+  </p>
+  <p><em>Left: Word frequency in spam vs ham messages. Right: Feature importance showing words that influence classification.</em></p>
+</div>
 
-This visualization shows the distribution of message lengths between spam and legitimate messages. Spam messages tend to be longer on average, with more outliers in the higher ranges, indicating verbose marketing language and calls-to-action.
+These visualizations provide key insights into our spam detection model:
 
-#### 2. Word Frequency Analysis
-![Word Frequency Analysis](INSERT_IMAGE_URL_HERE)
+1. **Word Frequency Analysis**: The most common words in legitimate messages are conversational terms like "go", "get", and "can", while spam messages frequently contain words like "free", "call", and "text" - typical of marketing language.
 
-This visualization displays the most common words found in spam vs legitimate messages. Words like "free", "offer", and "win" appear disproportionately in spam messages, while conversational words dominate legitimate messages.
+2. **Feature Importance**: Shows which words have the strongest influence on classification decisions. Words with positive importance are indicative of spam, while negative values suggest legitimate messages.
 
-#### 3. Feature Importance
-![Feature Importance](INSERT_IMAGE_URL_HERE)
-
-This visualization demonstrates the most important features (words/tokens) that the model uses to make its classifications. The words with higher importance scores have greater influence on the model's decision-making process.
+3. **Message Length Distribution**: Spam messages tend to be longer on average, with more outliers in the higher ranges, indicating verbose marketing language and calls-to-action.
+### Data Visualizations
 
 ## Deployment Instructions
 
@@ -192,10 +204,20 @@ This will build and run the frontend container, making the application available
 ## Reference Screens
 
 ### Spam Detection Interface
-![Prediction Interface](INSERT_IMAGE_URL_HERE)
+<div align="center">
+  <h4>Word Frequency Analysis</h4>
+  <p>
+    <img src="https://github.com/user-attachments/assets/52c5dc3f-e54b-430b-ab76-b955b20ef00b" width="45%" alt="Word Frequency Analysis" />
+    <img src="https://github.com/user-attachments/assets/77371d2c-dd0d-4fe7-987d-db874633e0f5" width="45%" alt="Feature Importance" />
+  </p>
+  <p><em>Left: Word frequency in spam vs ham messages. Right: Feature importance showing words that influence classification.</em></p>
+</div>
+
+
 
 ### Retraining Interface
-![Retraining Interface](https://i.imgur.com/wTpZMnA.png)
+![image](https://github.com/user-attachments/assets/dd974de6-8e69-4b1a-8633-d48a4d0bfe89)
+
 
 ## Conclusion
 
