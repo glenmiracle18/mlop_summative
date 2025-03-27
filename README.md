@@ -93,7 +93,6 @@ Our spam detection model undergoes rigorous evaluation in our Jupyter notebook u
   <h4>Word Frequency Analysis</h4>
   <p>
     <img src="https://github.com/user-attachments/assets/f9a71eab-c4d5-4fcc-b9d9-f19b6e2f9ac7" width="45%" alt="Word Frequency Analysis" />
-    <img src="https://github.com/user-attachments/assets/818ff977-6950-4832-81ee-3b946291338c" width="45%" alt="Feature Importance" />
     <img src="https://github.com/user-attachments/assets/79ea3a99-be0f-41b1-95ee-a11260c450fd" width="45%" alt="Feature Importance" />
   </p>
   <p><em>Left: Word frequency in spam vs ham messages. Right: Feature importance showing words that influence classification.</em></p>
