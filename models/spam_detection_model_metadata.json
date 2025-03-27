@@ -1,0 +1,10 @@
+{
+  "model_creation_time": "2025-03-26 09:56:44",
+  "model_type": "SVC",
+  "vectorizer_type": "TfidfVectorizer",
+  "files": {
+    "model": "models/spam_detection_model.pkl",
+    "vectorizer": "models/spam_detection_model_vectorizer.pkl",
+    "label_encoder": "models/spam_detection_model_label_encoder.pkl"
+  }
+}

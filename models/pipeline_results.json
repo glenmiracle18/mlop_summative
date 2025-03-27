@@ -1,0 +1,29 @@
+{
+  "selected_model": "svm",
+  "accuracy": 0.9838565022421525,
+  "saved_paths": {
+    "model": "models/spam_detection_model.pkl",
+    "vectorizer": "models/spam_detection_model_vectorizer.pkl",
+    "label_encoder": "models/spam_detection_model_label_encoder.pkl",
+    "metadata": "models/spam_detection_model_metadata.json"
+  },
+  "execution_time": 9.974593162536621,
+  "example_predictions": [
+    {
+      "message": "Congratulations! You've won a $1000 gift card. Call now to claim your prize!",
+      "prediction": "spam"
+    },
+    {
+      "message": "Hey, can we meet for coffee tomorrow at 3pm?",
+      "prediction": "ham"
+    },
+    {
+      "message": "URGENT: Your bank account has been suspended. Click here to verify your information.",
+      "prediction": "spam"
+    },
+    {
+      "message": "I'll be home late tonight. Don't wait up.",
+      "prediction": "ham"
+    }
+  ]
+}

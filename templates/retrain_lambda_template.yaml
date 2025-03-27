@@ -1,0 +1,176 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for Spam Detection Model Retraining Lambda'
+
+Parameters:
+  ModelBucketName:
+    Type: String
+    Description: Name of the S3 bucket to store model artifacts
+    Default: spam-detection-model-artifacts
+  
+  UploadBucketName:
+    Type: String
+    Description: Name of the S3 bucket where new data will be uploaded
+    Default: spam-detection-data-uploads
+  
+  LambdaTimeout:
+    Type: Number
+    Description: Timeout for the Lambda function in seconds
+    Default: 900
+    MinValue: 60
+    MaxValue: 900
+  
+  LambdaMemory:
+    Type: Number
+    Description: Memory allocation for the Lambda function in MB
+    Default: 3008
+    AllowedValues: [1024, 2048, 3008]
+
+  SciKitLayerArn:
+    Type: String
+    Description: ARN of an existing Lambda layer with scikit-learn and dependencies
+    Default: arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python38:25
+
+Resources:
+  # IAM role for the Lambda function
+  RetrainLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: RetrainLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:aws:s3:::${UploadBucketName}'
+                  - !Sub 'arn:aws:s3:::${UploadBucketName}/*'
+                  - !Sub 'arn:aws:s3:::${ModelBucketName}'
+                  - !Sub 'arn:aws:s3:::${ModelBucketName}/*'
+              - Effect: Allow
+                Action:
+                  - lambda:CreateFunction
+                  - lambda:DeleteFunction
+                  - lambda:GetFunction
+                  - lambda:UpdateFunctionCode
+                  - lambda:UpdateFunctionConfiguration
+                  - lambda:AddPermission
+                  - lambda:RemovePermission
+                  - lambda:PublishVersion
+                Resource: 
+                  - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:spam-detection-prediction'
+                  - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:spam-detection-prediction:*'
+              - Effect: Allow
+                Action:
+                  - iam:CreateRole
+                  - iam:DeleteRole
+                  - iam:GetRole
+                  - iam:PassRole
+                  - iam:PutRolePolicy
+                  - iam:AttachRolePolicy
+                  - iam:DetachRolePolicy
+                  - iam:ListRolePolicies
+                  - iam:ListAttachedRolePolicies
+                Resource: 
+                  - !Sub 'arn:aws:iam::${AWS::AccountId}:role/spam-detection-prediction-role'
+              - Effect: Allow
+                Action:
+                  - apigateway:GET
+                  - apigateway:POST
+                  - apigateway:PUT
+                  - apigateway:DELETE
+                  - apigateway:PATCH
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                Resource: 'arn:aws:ecr:*:*:repository/*'
+        - PolicyName: LambdaAdminPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'lambda:*'
+                Resource: '*'
+              - Effect: Allow
+                Action: 'iam:*'
+                Resource: '*'
+  
+  # Lambda function for retraining
+  RetrainModelFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: RetrainLambdaRole
+    Properties:
+      FunctionName: spam-detection-retrain
+      Description: Lambda function to retrain the spam detection model
+      Runtime: python3.8
+      Handler: retrain_model_lambda.lambda_handler
+      Timeout: !Ref LambdaTimeout
+      MemorySize: !Ref LambdaMemory
+      Role: !GetAtt RetrainLambdaRole.Arn
+      Environment:
+        Variables:
+          MODEL_BUCKET: !Ref ModelBucketName
+          REGION_NAME: !Ref 'AWS::Region'
+      Code:
+        S3Bucket: !Ref ModelBucketName
+        S3Key: lambda/retrain_model_lambda.zip
+      Layers:
+        - !Ref SciKitLayerArn
+  
+  # S3 bucket trigger permission
+  S3LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref RetrainModelFunction
+      Principal: 's3.amazonaws.com'
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !Sub 'arn:aws:s3:::${UploadBucketName}'
+
+Outputs:
+  RetrainLambdaArn:
+    Description: ARN of the retrain Lambda function
+    Value: !GetAtt RetrainModelFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-RetrainLambda"
+  
+  ManualSetupInstructions:
+    Description: Instructions to manually configure S3 event notification
+    Value: !Sub |
+      To configure S3 event notification for triggering the Lambda function:
+      1. Go to the S3 console at https://s3.console.aws.amazon.com/
+      2. Select the ${UploadBucketName} bucket
+      3. Go to Properties tab > Event Notifications > Create event notification
+      4. Enter a name for the notification (e.g., "TriggerRetrainLambda")
+      5. Under Event types, select "All object create events"
+      6. Under Filter patterns > Suffix, enter ".csv"
+      7. Under Destination, select "Lambda function" 
+      8. Choose the "${RetrainModelFunction}" function
+      9. Click "Save changes"
+  
+  UploadDataCommand:
+    Description: Command to upload a new dataset to trigger retraining
+    Value: !Sub "aws s3 cp your-data.csv s3://${UploadBucketName}/datasets/new-data.csv"
+  
+  InvokeLambdaCommand:
+    Description: Command to manually invoke the Lambda function
+    Value: !Sub "aws lambda invoke --function-name spam-detection-retrain --payload '{\"bucket\":\"${UploadBucketName}\",\"key\":\"datasets/your-data.csv\"}' response.json" 
+  
+  UpdateFrontendApi:
+    Description: Update frontend to use the new API endpoint
+    Value: "After retraining, update the frontend to use the new API URL shown in the Lambda function output" 

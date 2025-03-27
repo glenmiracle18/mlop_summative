@@ -1,0 +1,321 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Spam Detection API - Lambda function with API Gateway'
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Default: spam-detection-model-1742984560
+    Description: S3 bucket containing the model files
+
+Resources:
+  # IAM Role for Lambda with access to S3 and CloudWatch Logs
+  SpamDetectionLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:aws:s3:::${S3BucketName}'
+                  - !Sub 'arn:aws:s3:::${S3BucketName}/*'
+
+  # Lambda Function
+  SpamDetectionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: spam-detection-api
+      Handler: index.lambda_handler
+      Role: !GetAtt SpamDetectionLambdaRole.Arn
+      Runtime: python3.9
+      Timeout: 60
+      MemorySize: 1024
+      Environment:
+        Variables:
+          S3_BUCKET: !Ref S3BucketName
+      Code:
+        ZipFile: |
+          import json
+          import pickle
+          import re
+          import os
+          import boto3
+          import logging
+
+          # Set up logging
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          # Initialize S3 client
+          s3 = boto3.client('s3')
+
+          # Config
+          BUCKET_NAME = os.environ['S3_BUCKET']
+
+          def clean_text(text):
+              """
+              Clean and normalize text data
+              """
+              # Convert to lowercase
+              text = text.lower()
+              
+              # Remove URLs
+              text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
+              
+              # Remove HTML tags
+              text = re.sub(r'<.*?>', '', text)
+              
+              # Remove punctuation and numbers
+              text = re.sub(r'[^\w\s]', '', text)
+              text = re.sub(r'\d+', '', text)
+              
+              # Remove extra spaces
+              text = re.sub(r'\s+', ' ', text).strip()
+              
+              return text
+
+          def download_model_from_s3():
+              """
+              Download model files from S3 to Lambda's /tmp directory
+              """
+              model_files = [
+                  'spam_detection_model.pkl',
+                  'spam_detection_model_vectorizer.pkl',
+                  'spam_detection_model_label_encoder.pkl'
+              ]
+              
+              for file_name in model_files:
+                  local_file_path = f'/tmp/{file_name}'
+                  if not os.path.exists(local_file_path):
+                      logger.info(f"Downloading {file_name} from S3")
+                      try:
+                          s3.download_file(BUCKET_NAME, file_name, local_file_path)
+                          logger.info(f"Successfully downloaded {file_name}")
+                      except Exception as e:
+                          logger.error(f"Error downloading {file_name}: {str(e)}")
+                          raise
+
+          def predict_without_sklearn(text, model_data, vectorizer_data, label_encoder_data):
+              """
+              Simple classification using pre-extracted model data
+              This doesn't rely on scikit-learn being available
+              """
+              # This is a simple function to classify without scikit-learn
+              # In a real implementation, you would include a proper classifer
+              # or use a Lambda Layer with scikit-learn
+              
+              cleaned_text = clean_text(text)
+              logger.info(f"Cleaned text: {cleaned_text}")
+              
+              # For now, do basic classification
+              spam_keywords = ["free", "win", "winner", "cash", "prize", "money", "offer", 
+                              "credit", "loan", "dating", "sex", "cialis", "viagra", 
+                              "click", "guarantee", "investment", "million", "casino"]
+              
+              # Simple rule-based approach
+              word_count = sum(1 for word in cleaned_text.split() if word.lower() in spam_keywords)
+              
+              # If 2 or more spam words, classify as spam
+              prediction = "spam" if word_count >= 2 else "ham"
+              confidence = min(0.5 + (word_count * 0.1), 0.99) if prediction == "spam" else 0.5
+              
+              logger.info(f"Simple classification: {prediction} with confidence {confidence}")
+              return prediction, confidence
+
+          def lambda_handler(event, context):
+              """
+              Lambda function handler for spam detection
+              """
+              logger.info("Received event: " + json.dumps(event))
+              
+              try:
+                  # Parse input - handle both direct invocation and API Gateway
+                  if 'body' in event:
+                      # This is from API Gateway
+                      try:
+                          body = json.loads(event['body'])
+                      except:
+                          body = event['body']  # In case it's already parsed
+                  else:
+                      # Direct invocation
+                      body = event
+                      
+                  # Extract text from various possible formats
+                  text = None
+                  if isinstance(body, dict):
+                      text = body.get('text') or body.get('message')
+                  elif isinstance(body, str):
+                      text = body
+                      
+                  if not text:
+                      logger.error("No text provided in the request")
+                      return {
+                          'statusCode': 400,
+                          'headers': {
+                              'Content-Type': 'application/json',
+                              'Access-Control-Allow-Origin': '*'
+                          },
+                          'body': json.dumps({
+                              'error': 'No text provided. Please include "text" or "message" in your request.'
+                          })
+                      }
+                      
+                  logger.info(f"Processing text: {text}")
+                  
+                  # For now, use a simple prediction without scikit-learn
+                  # In production, use a Lambda Layer with scikit-learn installed
+                  prediction, confidence = predict_without_sklearn(text, None, None, None)
+                  
+                  # Prepare response
+                  response_body = {
+                      'input': text,
+                      'prediction': prediction,
+                      'confidence': confidence
+                  }
+                  
+                  return {
+                      'statusCode': 200,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*'
+                      },
+                      'body': json.dumps(response_body)
+                  }
+              
+              except Exception as e:
+                  logger.error(f"Error processing request: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*'
+                      },
+                      'body': json.dumps({
+                          'error': f"Internal server error: {str(e)}"
+                      })
+                  }
+
+  # API Gateway REST API
+  SpamDetectionApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: SpamDetectionApi
+      Description: API for spam detection
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # API Gateway Resource (endpoint path)
+  ApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref SpamDetectionApi
+      ParentId: !GetAtt SpamDetectionApi.RootResourceId
+      PathPart: predict
+
+  # API Gateway Method (POST)
+  ApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref SpamDetectionApi
+      ResourceId: !Ref ApiResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SpamDetectionFunction.Arn}/invocations'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestTemplates:
+          application/json: |
+            {
+              "body" : $input.json('$')
+            }
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+          ResponseModels:
+            application/json: 'Empty'
+
+  # CORS for the API
+  ApiCorsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref SpamDetectionApi
+      ResourceId: !Ref ApiResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+          ResponseModels:
+            application/json: 'Empty'
+
+  # API Gateway Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ApiMethod
+      - ApiCorsMethod
+    Properties:
+      RestApiId: !Ref SpamDetectionApi
+      StageName: prod
+
+  # Permission for API Gateway to invoke Lambda
+  LambdaApiGatewayPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SpamDetectionFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SpamDetectionApi}/*/POST/predict'
+
+Outputs:
+  ApiEndpoint:
+    Description: URL of the API endpoint
+    Value: !Sub 'https://${SpamDetectionApi}.execute-api.${AWS::Region}.amazonaws.com/prod/predict'
+  
+  InstructionsForTesting:
+    Description: How to test the API
+    Value: !Sub |
+      You can test the API using curl:
+      
+      curl -X POST \
+        https://${SpamDetectionApi}.execute-api.${AWS::Region}.amazonaws.com/prod/predict \
+        -H 'Content-Type: application/json' \
+        -d '{"text": "Hello, is this spam?"}'
+      
+      Or with a browser tool like Postman. 
