@@ -4,9 +4,9 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   // Explicitly configure the path aliases
-  experimental: {
-    esmExternals: 'loose',
-  },
+  // experimental: {
+  //   esmExternals: 'loose',
+  // },
 };
 
 module.exports = nextConfig;

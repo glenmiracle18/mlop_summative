@@ -391,7 +391,6 @@ export function FileUploadComponent() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle className="text-2xl">Retrain Model</CardTitle>
         <CardDescription>
           Upload a new dataset to retrain the spam detection model
         </CardDescription>

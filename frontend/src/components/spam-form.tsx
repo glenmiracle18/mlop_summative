@@ -164,7 +164,10 @@ export function SpamPredictionForm({
       </form>
 
       <div className="mt-8">
+        <div className="flex items-center justify-between">  
         <h3 className="text-lg font-medium mb-4">Sample Messages</h3>
+        <p className="text-md font-serif italic text-emerald-600">Click to use message</p>
+        </div>
         <div className="grid grid-cols-1 gap-3">
           {SAMPLE_MESSAGES.map((sample, index) => (
             <button
@@ -173,7 +176,7 @@ export function SpamPredictionForm({
               onClick={() => setMessage(sample.text)}
               className="p-3 rounded-lg border-2 text-start w-full cursor-pointer hover:shadow-sm"
             >
-              <div className="font-medium mb-1 text-blue-600/50">{sample.label}</div>
+              <div className="font-medium mb-1 text-emerald-600">{sample.label}</div>
               <div className="text-sm line-clamp-2">{sample.text}</div>
             </button>
           ))}
