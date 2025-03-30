@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { predictSpam } from "./actions";
 import { SpamPredictionForm } from "@/components/spam-form";
 import { FileUploadComponent } from "@/components/file-upload";
+import { FileConverter } from "@/components/file-converter";
 import { Toaster } from "sonner";
 
 export default function PredictionPage() {
@@ -28,26 +29,22 @@ export default function PredictionPage() {
           </div>
 
           {/* Retraining Column */}
-          <Card className="bg-white shadow-lg border-0 rounded-xl overflow-hidden h-fit">
-          <CardHeader className="">
-                <CardTitle className="text-2xl text-black font-serif">Retraining Model</CardTitle>
+          <div className="space-y-6">
+            <Card className="bg-white shadow-lg border-0 rounded-xl overflow-hidden h-fit">
+              <CardHeader className="">
+                <CardTitle className="text-2xl text-black font-serif">Model Retraining</CardTitle>
               </CardHeader>
-            <CardContent className="pt-6">
-              <div className="mb-6">
-                <p className="text-gray-700 mb-4">Help improve the spam detection model by uploading labeled examples:</p>
-                <FileUploadComponent />
-              </div>
-              
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h3 className="font-medium text-gray-800 mb-2">Upload Requirements:</h3>
-                <ul className="text-sm text-gray-600 space-y-2 list-disc pl-5">
-                  <li>CSV file with 'message' and 'label' columns</li>
-                  <li>Labels must be 'spam' or 'ham' (legitimate messages)</li>
-                  <li>For best results, include at least 50 examples of each type</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
+              <CardContent className="pt-6">
+                <div className="mb-6">
+                  <p className="text-gray-700 mb-4">Help improve the spam detection model by uploading labeled examples:</p>
+                  <FileUploadComponent />
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Format Converter */}
+            <FileConverter />
+          </div>
         </div>
       </div>
 
@@ -55,7 +52,7 @@ export default function PredictionPage() {
         <p>© 2025 Spam Detection System | Created by Bonyu Miracle Glen</p>
       </footer>
 
-      {/* <Toaster
+      <Toaster
         position="top-center"
         richColors
         toastOptions={{
@@ -64,7 +61,7 @@ export default function PredictionPage() {
             borderRadius: '8px',
           },
         }}
-      /> */}
+      />
     </main>
   );
 }

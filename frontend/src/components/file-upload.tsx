@@ -398,6 +398,17 @@ export function FileUploadComponent() {
       
       <CardContent>
         <div className="space-y-4">
+          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <h3 className="text-sm font-medium mb-2">Data Format Requirements:</h3>
+            <ul className="text-xs text-gray-600 list-disc pl-5 space-y-1">
+              <li>CSV file with exactly <strong>two columns</strong></li>
+              <li>Column 1 header: <code className="bg-gray-200 px-1 rounded">message</code></li>
+              <li>Column 2 header: <code className="bg-gray-200 px-1 rounded">label</code></li>
+              <li>Labels must be <code className="bg-gray-200 px-1 rounded">spam</code> or <code className="bg-gray-200 px-1 rounded">ham</code></li>
+            </ul>
+            <div className="text-xs italic mt-2 text-gray-500">Example: <code className="bg-gray-200 px-1 rounded">message,label<br/>This is a spam message,spam<br/>This is not spam,ham</code></div>
+          </div>
+          
           <div 
             className={cn(
               "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors",

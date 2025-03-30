@@ -53,9 +53,31 @@ export async function POST(request: NextRequest) {
     console.log(`Lambda response received with status code: ${response.StatusCode}`);
     
     // Parse Lambda response
-    const responsePayload = response.Payload 
-      ? JSON.parse(Buffer.from(response.Payload).toString()) 
-      : null;
+    let responsePayload;
+    try {
+      if (response.Payload) {
+        const payloadString = Buffer.from(response.Payload).toString();
+        console.log("Raw Lambda response:", payloadString);
+        responsePayload = JSON.parse(payloadString);
+      } else {
+        responsePayload = null;
+      }
+    } catch (parseError) {
+      console.error("Failed to parse Lambda response:", parseError);
+      console.error("Raw response:", response.Payload ? Buffer.from(response.Payload).toString() : "No payload");
+      addLog("Failed to parse Lambda response. Check data format.", 'error');
+      
+      return NextResponse.json({
+        error: "Invalid response from Lambda function",
+        details: "The retraining service returned an invalid response. Your data may be in the wrong format.",
+        troubleshooting: [
+          "Ensure your CSV file has exactly two columns named 'message' and 'label'",
+          "Labels should be 'spam' or 'ham' (not v1/v2)",
+          "Check that your file is properly formatted (no special characters in headers)",
+          "Try uploading the file again after fixing these issues"
+        ]
+      }, { status: 500 });
+    }
     
     if (response.StatusCode !== 200) {
       console.error(`Lambda execution failed with status code: ${response.StatusCode}`);
@@ -71,7 +93,15 @@ export async function POST(request: NextRequest) {
       console.error(`Error details: ${JSON.stringify(responsePayload)}`);
       addLog(`AWS Lambda function error: ${response.FunctionError}`, 'error');
       return NextResponse.json(
-        { error: `Lambda function error: ${response.FunctionError}`, details: responsePayload },
+        { 
+          error: `Lambda function error: ${response.FunctionError}`, 
+          details: responsePayload,
+          troubleshooting: [
+            "Your data format may not match the expected format",
+            "Ensure CSV file has 'message' and 'label' columns (not v1/v2)",
+            "Labels should be 'spam' or 'ham'"
+          ]
+        },
         { status: 500 }
       );
     }
@@ -85,21 +115,43 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    let parsedBody;
+    try {
+      parsedBody = typeof responsePayload.body === 'string' 
+        ? JSON.parse(responsePayload.body) 
+        : responsePayload.body;
+    } catch (bodyParseError) {
+      console.error("Failed to parse response body:", bodyParseError);
+      console.error("Raw body:", responsePayload.body);
+      
+      return NextResponse.json({
+        error: "Failed to process Lambda response",
+        details: "The response body could not be parsed correctly.",
+        raw: responsePayload.body
+      }, { status: 500 });
+    }
+    
     if (responsePayload.statusCode !== 200) {
-      const errorMessage = responsePayload.body 
-        ? JSON.parse(responsePayload.body).error 
-        : "Retraining process failed";
+      const errorMessage = parsedBody?.error || "Retraining process failed";
       
       console.error(`Retraining process failed: ${errorMessage}`);
       addLog(`Model retraining failed: ${errorMessage}`, 'error');
       return NextResponse.json(
-        { error: errorMessage },
+        { 
+          error: errorMessage,
+          troubleshooting: [
+            "Check your data format - columns should be 'message' and 'label'",
+            "Labels should be 'spam' or 'ham', not v1/v2",
+            "Make sure your CSV file doesn't have special characters or formatting issues",
+            "Upload a plain text CSV with the correct column headers"
+          ]
+        },
         { status: responsePayload.statusCode || 500 }
       );
     }
 
     // Extract and return retraining results
-    const result = responsePayload.body ? JSON.parse(responsePayload.body) : {};
+    const result = parsedBody || {};
     
     console.log(`Retraining completed successfully. Accuracy: ${result.model_accuracy}`);
     addLog(`Model retrained successfully! Accuracy: ${(result.model_accuracy * 100).toFixed(2)}%`, 'success');
@@ -119,7 +171,16 @@ export async function POST(request: NextRequest) {
     addLog(`Model retraining failed: ${errorMessage}`, 'error');
     
     return NextResponse.json(
-      { error: "Failed to trigger model retraining", message: errorMessage },
+      { 
+        error: "Failed to trigger model retraining", 
+        message: errorMessage,
+        troubleshooting: [
+          "Make sure your CSV file has exactly two columns: 'message' and 'label'",
+          "The 'label' column should only contain 'spam' or 'ham' values",
+          "Ensure your file is a valid CSV format with proper headers",
+          "Try uploading a smaller file first to test the functionality"
+        ]
+      },
       { status: 500 }
     );
   }
