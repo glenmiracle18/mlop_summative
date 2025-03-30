@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { addLog } from "../logs/route";
+import { addLog } from "../logs/internalUtils";
 
 // Initialize Lambda client
 const lambdaClient = new LambdaClient({

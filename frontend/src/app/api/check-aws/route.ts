@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { S3Client, ListBucketsCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
 import { LambdaClient, ListFunctionsCommand } from "@aws-sdk/client-lambda";
-import { addLog } from "../logs/route";
+import { addLog } from "../logs/internalUtils";
 
 // Define a proper type for the result
 interface AwsCheckResult {
