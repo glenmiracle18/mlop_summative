@@ -1,5 +1,15 @@
-# Spam Detection MLOps Pipeline
+## Spam Detection MLOps Pipeline
 ## Author: Bonyu Miracle Glen
+
+
+## Youtube Video URL:
+[Watch the video](https://youtu.be/YuFxMOfATKk)
+
+[![MLOP summative recording - Glen Miracle](https://youtu.be/YuFxMOfATKk)
+
+
+https://github.com/user-attachments/assets/bdd4526f-3a53-4d76-a929-83e09df257b6
+
 <div align="center">
   <h4>Word Frequency Analysis</h4>
   <p>
