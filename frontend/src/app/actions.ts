@@ -8,7 +8,7 @@ export async function predictSpam(formData: FormData) {
   }
 
   try {
-    const endPoint = process.env.PREDICTION_ENDPOINT || "https://6ahwfyqptb.execute-api.us-east-1.amazonaws.com/prod/predict";
+    const endPoint = process.env.PREDICTION_ENDPOINT || "https://5sagsrm9ie.execute-api.us-east-1.amazonaws.com/prod/predict";
     const response = await fetch(
       endPoint,
       {

@@ -29,7 +29,7 @@ export function addLogToBuffer(message: string, type: 'info' | 'error' | 'succes
   return logEntry;
 }
 
-// For backward compatibility with existing code (IMPORTANT)
+// For backward compatibility with existing code
 export const addLog = addLogToBuffer;
 
 // Send a log entry to all connected clients

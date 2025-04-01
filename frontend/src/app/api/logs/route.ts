@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { clients, logBuffer, addLog as _addLog } from "./internalUtils";
+import { NextRequest } from "next/server";
+import { clients, logBuffer } from "./internalUtils";
 
 // Server-sent events handler for streaming logs
 export async function GET(request: NextRequest) {

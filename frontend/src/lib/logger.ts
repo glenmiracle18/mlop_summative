@@ -2,7 +2,7 @@
 const logBuffer: {message: string, type: string, timestamp: number}[] = [];
 const MAX_BUFFER_SIZE = 100;
 
-// For importing in client and server components
+// Add a log message to the buffer
 export function addLog(message: string, type: 'info' | 'error' | 'success' | 'warning' = 'info') {
   const logEntry = {
     message,
@@ -22,7 +22,8 @@ export function addLog(message: string, type: 'info' | 'error' | 'success' | 'wa
       // Silent fail - don't crash if logging fails
     }
   } else {
-    // Server-side: Just log to console
+    // Server-side: Add to buffer directly
+    // This is only for server components that import this function
     console.log(`[${type.toUpperCase()}] ${message}`);
   }
   
