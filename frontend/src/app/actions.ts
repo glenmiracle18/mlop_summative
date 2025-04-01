@@ -26,7 +26,6 @@ export async function predictSpam(formData: FormData) {
 
     const result = await response.json();
     
-    // Parse the stringified body
     const predictionData = JSON.parse(result.body);
     
     return {
