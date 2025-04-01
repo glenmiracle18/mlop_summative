@@ -127,7 +127,7 @@ These visualizations provide key insights into our spam detection model:
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/yourusername/spam-detection-model.git
+git clone https://github.com/glenmiracle18/spam-detection-model.git
 cd spam-detection-model
 ```
 
