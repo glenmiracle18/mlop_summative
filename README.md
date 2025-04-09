@@ -1,6 +1,6 @@
 ## Spam Detection MLOps Pipeline
 ## Author: Bonyu Miracle Glen
-
+## Frontend Live URL: [Link](https://mlop-summative.vercel.app/)
 
 ## Youtube Video URL:
 [Watch the video](https://youtu.be/YuFxMOfATKk)
